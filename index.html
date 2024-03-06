@@ -2,10 +2,10 @@
 <!-- saved from url=(0022)http://localhost:8000/ -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Fluid Dynamics Simulation</title>
-<script src="./Fluid Dynamics Simulation that works_files/jquery-3.7.1.slim.js" integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
+<script src="./jquery-3.7.1.slim.js" integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
 <!-- script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@latest/dist/tf.min.js"></script>  -->
-<script src="./Fluid Dynamics Simulation that works_files/opencv.js"></script>
+<script async src="opencv.js" type="text/javascript" onload="onOpenCvReady();" onerror="onOpenCvError();"></script>
 
 
 <meta name="viewport" content="width=620">
@@ -24,16 +24,20 @@
 </style>
 </head>
 
-<body>
+<body style="text-align: center;">
 
 <h2>Fluid Dynamics Simulation</h2>
 
 <p>By <a href="http://physics.weber.edu/schroeder/">Dan Schroeder</a>, 
 <a href="http://physics.weber.edu/">Physics Department</a>, 
 <a href="http://weber.edu/">Weber State University</a></p>
-
-<canvas id="theCanvas" style="width:900px; height:450px;" width="900" height="450">This application runs only in modern
+<div id="canvascon" style="position:relative; height:450px; width:100%;display:flex; justify-content:center;">
+<canvas id="canvasInput" width="900" height="450" style="image-rendering: pixelated; position: absolute; top:0; left: auto; z-index:99; width:900px;height:450px;" ></canvas>
+<canvas id="theCanvas" width="900" height="450" style="width:900px; height: 450px; position: absolute; top:0;left:auto; z-index: 50;">This application runs only in modern
 browsers. For best results, use Google Chrome.</canvas>
+</div>
+<br>
+<input type="file" id="fileInput" name="file" accept="image/*"/>
 <p><b>Hold SHIFT to join consecutive clicks with straight lines</b></p>
 <div style="margin-bottom:0.5em">
 	<select id="sizeSelect" onchange="resize()" style="display: none;">
@@ -52,18 +56,18 @@ browsers. For best results, use Google Chrome.</canvas>
 	<button id="stepButton" type="button" onclick="simulate()" disabled=""><div class="butmoji">⏯</div><div class="label">Step</div></button>
 	<button id="startButton" type="button" onclick="startStop()"><div class="butmoji">⏸</div><div class="label">Pause</div></button>
 	<div class="spacer" style="display: inline-block; width:150px;"></div>
-	<button id="drawButton" type="button" onclick="drawButton()"><div class="butmoji"><img src="./Fluid Dynamics Simulation that works_files/drawing.png" style="width:33px;height:33px; margin-bottom:-8px;"></div><div class="label">draw</div></button>
-	<button id="eraseButton" type="button" onclick="eraseButton()"><div class="butmoji"><img src="./Fluid Dynamics Simulation that works_files/erase.png" style="width:33px;height:33px; margin-bottom:-8px;"></div><div class="label">erase</div></button>
-	<button id="clearButton" type="button" onclick="clearBarriers()"><div class="butmoji"><img src="./Fluid Dynamics Simulation that works_files/eraser.png" style="width: 33px;height:33px; margin-bottom:-8px;"></div><div class="label">clear all</div></button>
+	<button id="drawButton" type="button" onclick="drawButton()"><div class="butmoji"><img src="./drawing.png" style="width:33px;height:33px; margin-bottom:-8px;"></div><div class="label">draw</div></button>
+	<button id="eraseButton" type="button" onclick="eraseButton()"><div class="butmoji"><img src="./erase.png" style="width:33px;height:33px; margin-bottom:-8px;"></div><div class="label">erase</div></button>
+	<button id="clearButton" type="button" onclick="clearBarriers()"><div class="butmoji"><img src="./eraser.png" style="width: 33px;height:33px; margin-bottom:-8px;"></div><div class="label">clear all</div></button>
 </div>
 <div class="slider">
 	Flow speed: <span id="speedValue">0.120</span><br>
-	<input id="speedSlider" type="range" min="0" max="0.12" step="0.005" value="0.1" onmousemove="adjustSpeed()">
+	<input id="speedSlider" type="range" min="0" max="0.06" step="0.0025" value="0.05" onmousemove="adjustSpeed()">
 </div>
 <br>
 <div class="slider">
-	Viscosity: <span id="viscValue">0.001</span><br>
-	<input id="viscSlider" type="range" min="0.001" max="0.013" step="0.002" value="0.003" onmousemove="adjustViscosity()">
+	Viscosity: <span id="viscValue">0.0005</span><br>
+	<input id="viscSlider" type="range" min="0.0005" max="0.013" step="0.0005" value="0.0005" onmousemove="adjustViscosity()">
 </div>
 
 <div style="margin-top:3px">
@@ -89,7 +93,7 @@ browsers. For best results, use Google Chrome.</canvas>
 </div>
 <div>
 	Animation speed:
-	<input id="stepsSlider" type="range" min="1" max="40" step="1" value="5" onchange="resetTimer()">
+	<input id="stepsSlider" type="range" min="1" max="40" step="2" value="4" onchange="resetTimer()">
 	&nbsp;&nbsp;Steps/frames per second: <span id="speedReadout">117</span>
 	&nbsp;&nbsp;<input id="rafCheck" type="checkbox" checked="" onchange="resetTimer()">Faster?
 </div>
@@ -170,8 +174,67 @@ xmlhttp.onreadystatechange = function() {
 };
 xmlhttp.open("GET", "bdata.json", true);
 xmlhttp.send();
-      
-	const STRESS_LIMIT = 0.001;
+</script>
+<script src="utils.js" type="text/javascript"></script>
+<script>
+	utils = new Utils();
+	utils.addFileInputHandler('fileInput', 'canvasInput');
+	let mth;
+	var ci = document.getElementById("fileInput");
+	ci.addEventListener("change",(e)=>{
+		let canvasin = document.getElementById("canvasInput");
+		canvasin.style.zIndex='99';
+		setTimeout(()=>{canvastobarrier();},250)
+	});
+	function onOpenCvReady() {
+		let mb=new cv.Mat(900,450,cv.CV_8UC3,new cv.Scalar(128,128,128));
+		console.log(mb);
+		let canvasin = document.getElementById("canvasInput");
+		canvasin.style.zIndex='0';
+		canvas.style.zIndex='50';
+		cv.imshow('canvasInput',mb);
+		paintCanvas();
+	}
+	function onOpenCvError() {}
+	function canvastobarrier() {
+		let canvasin = document.getElementById("canvasInput");
+		if (confirm("Correct image?")){
+			let mm = new cv.Mat();
+			mth = new cv.Mat();
+			let inpctx = canvasin.getContext("2d");
+			let imgData = inpctx.getImageData(0, 0, canvasin.width, canvasin.height);
+			let mat = cv.matFromImageData(imgData);
+			let matgr = new cv.Mat();
+			if (mat.type() == cv.CV_8UC3) {
+				cv.cvtColor(mat,matgr,cv.COLOR_RGB2GRAY);
+			} else if (mat.type() == cv.CV_8UC4) {
+				cv.cvtColor(mat,matgr,cv.COLOR_RGBA2GRAY);
+			}
+			console.log(matgr.type());
+			console.log(mm.type());
+			cv.resize(matgr, mm, new cv.Size(900/6,450/6),0,0,cv.INTER_AREA);
+			cv.threshold(mm, mth, 190, 200, cv.THRESH_BINARY);
+			cv.imshow("canvasInput", mth);
+			let bd=mth.data;
+			for (let y =0; y<ydim;++y){
+				for(let x=0;x<xdim;++x){
+					let ii = (x+y*xdim);
+					let io = x+(ydim-y-1)*xdim;
+					barrier[io]=bd[ii]<128;
+				}
+			}
+			canvasin.style.zIndex='0';
+			canvas.style.zIndex='50';
+			cv.imshow('canvasInput',mat);
+			paintCanvas();
+		} else {
+			canvasin.style.zIndex='0';
+			canvas.style.zIndex='50';
+			paintCanvas();
+		}
+	}
+
+	const STRESS_LIMIT = 0.0005;
 
 
 
@@ -283,10 +346,15 @@ xmlhttp.send();
 	var curl = new Array(xdim*ydim);
 	var barrier = new Array(xdim*ydim);		// boolean array of barrier locations
 
+	var floffx = new Array(xdim*ydim);
+	var floffy = new Array(xdim*ydim);
+
 	// Initialize to a steady rightward flow with no barriers:
 	for (var y=0; y<ydim; y++) {
 		for (var x=0; x<xdim; x++) {
 			barrier[x+y*xdim] = false;
+			floffx[x+y*xdim] = Math.random()*2-1;
+			floffy[x+y*xdim] = Math.random()*2-1;
 		}
 	}
 
@@ -364,10 +432,17 @@ xmlhttp.send();
 
 
 	// Initialize array of partially transparant blacks, for drawing flow lines:
-	var transBlackArraySize = 50;
-	var transBlackArray = new Array(transBlackArraySize);
-	for (var i=0; i<transBlackArraySize; i++) {
-		transBlackArray[i] = "rgba(0,0,0," + Number(i/transBlackArraySize).toFixed(2) + ")";
+	var transDarkArraySize = 50;
+	var transDarkArray = new Array(transDarkArraySize);
+	for (var i=0; i<transDarkArraySize; i++) {
+		transDarkArray[i] = "rgba(0,0,0," + Number(i/transDarkArraySize).toFixed(2) + ")";
+	}
+
+	// Initialize array of partially transparant lights, for drawing flow lines:
+	var transLightArraySize = 50;
+	var transLightArray = new Array(transLightArraySize);
+	for (var i=0; i<transLightArraySize; i++) {
+		transLightArray[i] = "rgba(255,255,128," + Number(i/transLightArraySize).toFixed(2) + ")";
 	}
 
 	// Initialize tracers (but don't place them yet):
@@ -417,7 +492,6 @@ xmlhttp.send();
 		// Execute a bunch of time steps:
 		for (var step=0; step<stepsPerFrame; step++) {
 			collide();
-			//stabilize
 			entropy();
 			stream();
 			if (tracerCheck.checked) moveTracers();
@@ -528,10 +602,9 @@ xmlhttp.send();
 		//const tn0 = tf.tensor(n0);
 		//console.log(n0);
 		ofs = (ofs+1)%1;
-		for (var i = ofs; i < xdim*ydim; i+= 1) {
-		//for (var y=0; y<ydim; y++) {
-			//for (var x=0; x<xdim; x++) {
-			//	var i = x + y*xdim;
+		for (var y=0; y<ydim; y++) {
+			for (var x=0; x<xdim; x++) {
+				var i = x + y*xdim;
 				n0i=n0[i];
 				nEi=nE[i];
 				nWi=nW[i];
@@ -572,7 +645,7 @@ xmlhttp.send();
 					nNW[i] = eNWi*0.9+nNWi*0.1;
 					nSW[i] = eSWi*0.9+nSWi*0.1;
 				} // if stress
-			//} // for x
+			} // for x
 		} // for y
 	} // function
 
@@ -781,6 +854,7 @@ xmlhttp.send();
 				image.data[index+0] = r;
 				image.data[index+1] = g;
 				image.data[index+2] = b;
+				image.data[index+3] = 255;
 			}
 		}
 	}
@@ -797,6 +871,7 @@ xmlhttp.send();
 			for (var px=px0; px<px1; px++) {
 				var index = (px + py*image.width) * 4;
 				var r = 160;//((x+y)%2)*255;
+				var a = 12;
 				if (
 					px==px0 || 
 					//px==px1-1 || 
@@ -804,14 +879,15 @@ xmlhttp.send();
 					//py==py1-1
 				) {
 
-					r=255;
+					r=255; a=127;
 				}
 				if (px==px1-1 || py==py1-1){
-					r = 0;
+					r = 0; a=127;
 				}
 				image.data[index+0] = r;
 				image.data[index+1] = r;
 				image.data[index+2] = r;
+				image.data[index+3] = a;
 			}
 		}
 	}
@@ -835,19 +911,19 @@ xmlhttp.send();
 			var canvasX = (tracerX[t]+0.5) * pxPerSquare;
 			var canvasY = canvas.height - (tracerY[t]+0.5) * pxPerSquare;
 			context.fillStyle = "rgb(0,0,0)";
-			context.fillRect(canvasX-1, canvasY-1, 1, 1);
+			context.fillRect(canvasX-1, canvasY-1, 3, 3);
 			context.fillStyle = "rgb(255,255,255)";
-	       		context.fillRect(canvasX,canvasY, 1, 1);
+	       		context.fillRect(canvasX,canvasY, 3, 3);
 		}
 	}
 
 	// Draw a grid of short line segments along flow directions:
 	function drawFlowlines() {
-		var pxPerFlowline = 10;
+		var pxPerFlowline = 6;
 		if (pxPerSquare == 1) pxPerFlowline = 6;
 		if (pxPerSquare == 2) pxPerFlowline = 8;
 		if (pxPerSquare == 5) pxPerFlowline = 12;
-		if ((pxPerSquare == 6) || (pxPerSquare == 8)) pxPerFlowline = 15;
+		if ((pxPerSquare == 6) || (pxPerSquare == 8)) pxPerFlowline = 6;
 		if (pxPerSquare == 10) pxPerFlowline = 20;
 		var sitesPerFlowline = pxPerFlowline / pxPerSquare;
 		var xLines = canvas.width / pxPerFlowline;
@@ -858,20 +934,34 @@ xmlhttp.send();
 				var y = Math.round((yCount+0.5) * sitesPerFlowline);
 				var thisUx = ux[x+y*xdim];
 				var thisUy = uy[x+y*xdim];
+				var thisoffx = floffx[x+y*xdim]*pxPerFlowline;
+				var thisoffy = floffy[x+y*xdim]*pxPerFlowline;
 				var speed = Math.sqrt(thisUx*thisUx + thisUy*thisUy);
+				var tcurl = Math.abs(curl[x+y*xdim]);
 				if (speed > 0.0001) {
 					var px = (xCount+0.5) * pxPerFlowline;
 					var py = canvas.height - ((yCount+0.5) * pxPerFlowline);
-					var scale = 0.5 * pxPerFlowline / speed;
+					var scale = 1.5 * pxPerFlowline/ (speed+tcurl);
 					context.beginPath();
-					context.moveTo(px-thisUx*scale, py+thisUy*scale);
-					context.lineTo(px+thisUx*scale, py-thisUy*scale);
+					context.moveTo(px-thisUx*scale+thisoffx, py+thisUy*scale+thisoffy);
+					context.lineTo(px+thisUx*scale+thisoffx, py-thisUy*scale+thisoffy);
 					//context.lineWidth = speed * 5;
-					var cIndex = Math.round(speed * transBlackArraySize / 0.3);
-					if (cIndex >= transBlackArraySize) cIndex = transBlackArraySize - 1;
-					context.strokeStyle = transBlackArray[cIndex];
+					var cIndex = Math.round((speed+tcurl+0.005) * transDarkArraySize / 0.3);
+					if (cIndex >= transDarkArraySize) cIndex = transDarkArraySize - 1;
+					context.strokeStyle = transDarkArray[cIndex];
 					//context.strokeStyle = "rgba(0,0,0,0.1)";
 					context.stroke();
+
+					context.beginPath();
+					context.moveTo(px-thisUx*scale+thisoffx-1, py+thisUy*scale+thisoffy-1);
+					context.lineTo(px+thisUx*scale+thisoffx-1, py-thisUy*scale+thisoffy-1);
+					//context.lineWidth = speed * 5;
+					var cIndex = Math.round((speed+tcurl+0.005) * transLightArraySize / 0.3);
+					if (cIndex >= transLightArraySize) cIndex = transLightArraySize - 1;
+					context.strokeStyle = transLightArray[cIndex];
+					//context.strokeStyle = "rgba(0,0,0,0.1)";
+					context.stroke();
+
 				}
 			}
 		}
@@ -899,7 +989,7 @@ xmlhttp.send();
 
 	function drawShiftLineConnector() {
 		context.setTransform(1, 0, 0, 1, 0, 0);
-		var canvasLoc = pageToCanvas(globalMouseX, globalMouseY);
+		var canvasLoc = {x:globalMouseX,y:globalMouseY}; //pageToCanvas(globalMouseX, globalMouseY);
 		var gridLoc = canvasToGrid(canvasLoc.x, canvasLoc.y);
 		var canvasX = (lastx+0.5) * pxPerSquare;
 		var canvasY = canvas.height - (lasty+0.5) * pxPerSquare;
@@ -963,11 +1053,13 @@ xmlhttp.send();
 
 	// Functions to handle mouse/touch interaction:
 	function mouseDown(e) {
+		console.log("mousedown");
+		console.log(e);
 		globalShiftKey = e.shiftKey;
-		globalMouseX = e.pageX;
-		globalMouseY = e.pageY;
+		globalMouseX = e.layerX;
+		globalMouseY = e.layerY;
 		if (sensorCheck.checked) {
-			var canvasLoc = pageToCanvas(e.pageX, e.pageY);
+			var canvasLoc = {x:e.layerX,y:e.layerY}; // pageToCanvas(e.pageX, e.pageY);
 			var gridLoc = canvasToGrid(canvasLoc.x, canvasLoc.y);
 			var dx = (gridLoc.x - sensorX) * pxPerSquare;
 			var dy = (gridLoc.y - sensorY) * pxPerSquare;
@@ -979,8 +1071,8 @@ xmlhttp.send();
 	};
 	function mouseMove(e) {
 		globalShiftKey = e.shiftKey;
-		globalMouseX = e.pageX;
-		globalMouseY = e.pageY;
+		globalMouseX = e.layerX;
+		globalMouseY = e.layerY;
 		if (mouseIsDown) {
 			mousePressDrag(e);
 		}
@@ -1024,7 +1116,7 @@ xmlhttp.send();
 		e.preventDefault();
 		//console.log(e);
 		mouseIsDown = true;
-		var canvasLoc = pageToCanvas(e.pageX, e.pageY);
+		var canvasLoc = {x:e.layerX,y:e.layerY}; //pageToCanvas(e.pageX, e.pageY);
 		if (draggingSensor) {
 			var gridLoc = canvasToGrid(canvasLoc.x, canvasLoc.y);
 			sensorX = gridLoc.x;
@@ -1059,8 +1151,8 @@ xmlhttp.send();
 
 	// Convert canvas coordinates to grid coordinates:
 	function canvasToGrid(canvasX, canvasY) {
-		var gridX = Math.floor(canvasX / pxPerSquare);
-		var gridY = Math.floor((canvas.height - 1 - canvasY) / pxPerSquare); 	// off by 1?
+		var gridX = Math.floor((canvasX-1) / pxPerSquare);
+		var gridY = Math.floor((canvas.height - 1 - (canvasY-1)) / pxPerSquare); 	// off by 1?
 		return { x:gridX, y:gridY };
 	}
 
@@ -1387,17 +1479,5 @@ xmlhttp.send();
 		}
 	}
 </script>
-		<video id="videoInput"></video>
-<script>
-	let video = document.getElementById("videoInput"); // video is the id of video tag
-	navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-		.then(function(stream) {
-		        video.srcObject = stream;
-		        video.play();
-		})
-		.catch(function(err) {
-			console.log("An error occurred! " + err);
-		});
 </body>
 </html>
-</script></body><div><template shadowrootmode="open"><link href="chrome-extension://jffbochibkahlbbmanpmndnhmeliecah/picture-in-picture.css" type="text/css" rel="stylesheet"><div class="vivaldi-picture-in-picture-container initial"><input type="button" class="vivaldi-picture-in-picture-button" aria-label="picture-in-picture-button"></div></template></div></html>
