@@ -90,6 +90,7 @@ browsers. For best results, use Google Chrome.</canvas>
 		<option>Plot y velocity</option>
 		<option>Plot speed</option>
 		<option selected="">Plot curl</option>
+		<option>Plot stress</option>
 	</select>
 	&nbsp;&nbsp;Contrast:
 	<input id="contrastSlider" type="range" min="-10" max="10" step="1" value="0" onchange="paintCanvas()" onmousemove="paintCanvas()">
@@ -368,7 +369,7 @@ xmlhttp.send();
 	var eNW = new Array(xdim*ydim);
 	var eSW = new Array(xdim*ydim);
 
-
+	var stress = new Array(xdim*ydim);
 
 	var rho = new Array(xdim*ydim);			// macroscopic density
 	var ux = new Array(xdim*ydim);			// macroscopic velocity
@@ -667,7 +668,7 @@ xmlhttp.send();
 				eNWi=eNW[i];
 				eSWi=eSW[i];
 
-				var stress = (e0i-n0i)*(e0i-n0i)/e0i
+				stress[i] = (e0i-n0i)*(e0i-n0i)/e0i
 					   + (eEi-nEi)*(eEi-nEi)/eEi
 					   + (eWi-nWi)*(eWi-nWi)/eWi
 					   + (eNi-nNi)*(eNi-nNi)/eNi
@@ -677,7 +678,7 @@ xmlhttp.send();
 					   + (eNWi-nNWi)*(eNWi-nNWi)/eNWi
 					   + (eSWi-nSWi)*(eSWi-nSWi)/eSWi
 				;
-				if (stress > STRESS_LIMIT) {
+				if (stress[i] > STRESS_LIMIT) {
 					n0[i] = e0i*0.9+n0i*0.1;
 					nE[i] = eEi*0.9+nEi*0.1;
 					nW[i] = eWi*0.9+nWi*0.1;
@@ -688,6 +689,7 @@ xmlhttp.send();
 					nNW[i] = eNWi*0.9+nNWi*0.1;
 					nSW[i] = eSWi*0.9+nSWi*0.1;
 				} // if stress
+				stress[i] = nE[i];
 			} // for x
 		} // for y
 	} // function
@@ -849,9 +851,12 @@ xmlhttp.send();
 					} else if (plotType == 3) {
 						var speed = Math.sqrt(ux[x+y*xdim]*ux[x+y*xdim] + uy[x+y*xdim]*uy[x+y*xdim]);
 						cIndex = Math.round(nColors * (speed*4*contrast));
-					} else {
+					} else if (plotType == 4) {
 						cIndex = Math.round(nColors * (curl[x+y*xdim]*5*contrast + 0.5));
+					} else if (plotType == 5) {
+						cIndex = nColors/2 * stress[i]*100;
 					}
+
 					if (cIndex < 0) cIndex = 0;
 					if (cIndex > nColors) cIndex = nColors;
 				}
