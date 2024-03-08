@@ -646,6 +646,7 @@ xmlhttp.send();
 					nNW[i] = eNWi*0.9+nNWi*0.1;
 					nSW[i] = eSWi*0.9+nSWi*0.1;
 				} // if stress
+				stress[i] = nE[i];
 			} // for x
 		} // for y
 	} // function
@@ -810,9 +811,8 @@ xmlhttp.send();
 					} else if (plotType == 4) {
 						cIndex = Math.round(nColors * (curl[x+y*xdim]*5*contrast + 0.5));
 					} else if (plotType == 5) {
-						cIndex = nColors/2 * stress[i] / STRESS_LIMIT;
+						cIndex = nColors/2 * stress[i]*100;
 					}
-					if (cIndex > nColors) cIndex= nColors;
 
 					if (cIndex < 0) cIndex = 0;
 					if (cIndex > nColors) cIndex = nColors;
