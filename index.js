@@ -98,7 +98,7 @@ xmlhttp.send();
 	var globalMouseY;
 	var mobile = navigator.userAgent.match(/iPhone|iPad|iPod|Android|BlackBerry|Opera Mini|IEMobile/i)
 	var jscanvas = document.getElementById('theCanvas');
-	jscanvas.style.backgroundColor: '#FFEEDD';
+	jscanvas.style.backgroundColor= 'transparent';
 
 	var context = jscanvas.getContext('2d');
 	var image = context.createImageData(jscanvas.width, jscanvas.height);		// for direct pixel manipulation (faster than fillRect)
@@ -729,18 +729,20 @@ xmlhttp.send();
 
 
 
-  const GLcanvas = document.querySelector('#theGLCanvas');
+//  const GLcanvas = document.querySelector('#theGLCanvas');
+  const GLcanvas = document.getElementById("theGLCanvas");
+  console.log(GLcanvas);
   //GLcanvas.style.left = '1000px';
   //GLcanvas.style.display='block';
   const renderer = new THREE.WebGLRenderer({antialias: true, GLcanvas});
   window.renderer = renderer;
-  renderer.autoClearColor = true;
+  renderer.autoClearColor = false;
  
 /*
 const fragmentShader = `
 #include <common>
  
-uniform vec3 iResolution;
+uaaaaniform vec3 iResolution;
 uniform float iTime;
 uniform sampler2D uxt;
 uniform sampler2D uyt;
@@ -828,7 +830,7 @@ const uniforms = {
     uniforms.rhot.value = rhot;
     uniforms.barriert.value = barriert;
     */
-    console.log(renderer); 
+    //console.log(renderer); 
     renderer.render(scene, camera);
  
     //requestAnimationFrame(render);
